@@ -1,0 +1,912 @@
+## Atlassian resources
+$webResourceManager.requireResource("com.atlassian.auiplugin:ajs")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-button")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-toggle")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-tabs")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-forms")
+$webResourceManager.requireResource("com.atlassian.auiplugin:message")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-experimental-iconfont")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-table-sortable")
+$webResourceManager.requireResource("com.atlassian.jira.jira-quick-edit-plugin:quick-edit-issue")
+$webResourceManager.requireResource("com.atlassian.jira.view.issue")
+
+## Other resources
+$webResourceManager.requireResource("de.bearingpoint.app.backend:entrypoint-dynamictable")
+##$webResourceManager.requireResource("de.bearingpoint.app.backend:entrypoint-dynamictable_team")
+$webResourceManager.requireResource("de.bearingpoint.app.backend:agile-planning-platform-resources")
+
+<html>
+<head>
+    <title>Agile Planning Platform</title>
+    <!-- atl.general for general jira page -->
+    <meta name="decorator" content="atl.general">
+</head>
+<body>
+<script>
+    let base_url = '${baseurl}';
+    let userKey = '${userName}';
+
+    function editIssuePopup(issueId) {
+        JIRA.Forms.createEditIssueForm(
+                {issueId: issueId}).asDialog({
+            id: "my-custom-edit-dialog",
+        }).show();
+    }
+</script>
+<div id="page">
+    <div id="content">
+        <div class="aui-page-header">
+            <div class="aui-page-header-inner">
+                <div class="aui-page-header-image">
+                <span class="aui-avatar aui-avatar-project aui-avatar-large">
+                    <span class="aui-avatar-inner" id="logo">
+                        <img alt="" class="logo" role="presentation"/>
+                    </span>
+                </span>
+                </div>
+                <div class="aui-page-header-main">
+                    <h1>
+                        Agile Planning Platform - $!userName
+                    </h1>
+                </div>
+            </div>
+        </div>
+        <main class="aui-page-panel" id="main" role="main">
+            <div class="aui-page-panel-inner">
+                <div class="aui-page-panel-nav">
+                    <nav class="aui-navgroup aui-navgroup-vertical" aria-label="page">
+                        <div class="aui-nav-heading" title="Requests">
+                            <strong>Requests</strong>
+                        </div>
+                        #set( $create_request_href =
+                            "/jira/secure/CreateIssue!default.jspa?issuetype=" + $request_id.id +
+                            "&pid=" + $currentProject.id )
+
+                        #if(!$currentProject.issueTypes.contains($request_id))
+                            <div class="aui-message aui-message-warning">
+                                <p>Please enable Request issue type for project $currentProject.name.</p>
+                            </div>
+                        #end
+                        <ul class="aui-nav" title="Requests actions">
+                            <li>
+                                ##                                href=$create_request_href
+                                <a class="aui-nav-item" id="create-request">
+                                    <span class="aui-icon aui-icon-small aui-iconfont-list-add"></span>
+                                    <span class="aui-nav-item-label">Create Request</span>
+                                </a>
+
+                                <script>
+                                    AJS.$("#create-request").click(function (e) {
+                                        var createCreateIssueForm = require('quick-edit/form/factory/create-issue');
+                                        createCreateIssueForm({
+                                            issueType: '$request_id.id',
+                                            pid: '$currentProject.id'
+                                        }).asDialog({
+                                            windowTitle: 'Create Issue'
+                                        }).show();
+                                    })
+                                </script>
+                            </li>
+                        </ul>
+
+
+                        <div class="aui-nav-heading" title="Members">
+                            <strong>Members</strong>
+                        </div>
+                        <ul class="aui-nav" title="Members actions">
+                            <li>
+                                <a class="aui-nav-item"
+                                   href="$baseurl/plugins/servlet/agile-planning/planner/team-management">
+                                    <span class="aui-icon aui-icon-small aui-iconfont-people-group"></span>
+                                    <span class="aui-nav-item-label">Manage Teams</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="aui-nav-heading" title="Skill Database">
+                            <strong>Skill Database</strong>
+                        </div>
+                        <ul class="aui-nav" title="Skill Database actions">
+                            <li>
+                                <a class="aui-nav-item"
+                                   href="$baseurl/plugins/servlet/agile-planning/skilldb/main">
+                                    <span class="aui-icon aui-icon-small aui-iconfont-people-group"></span>
+                                    <span class="aui-nav-item-label">View Skill Database</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                    </nav>
+                </div>
+                <main id="main" role="main" class="aui-page-panel-content">
+                    <nav class="aui-navgroup aui-navgroup-horizontal">
+                        <div class="aui-tabs horizontal-tabs">
+                            <ul class="tabs-menu">
+                                <li class="menu-item active-tab">
+                                    <a href="#personal-calendar">Personal Calendar</a>
+                                </li>
+                                <li class="menu-item">
+                                    <a href="#request-overview">Request Overview</a>
+                                </li>
+                            </ul>
+                            <div class="tabs-pane active-pane" id="personal-calendar">
+                                <h2>Project $currentProject.name</h2>
+                                </br>
+                                <div id="maincontainer">
+                                    <div id="container"></div>
+                                </div>
+                                </br>
+                            </div>
+                            <div class="tabs-pane" id="teams-calendar">
+                                <h2>Project $currentProject.name</h2>
+                                </br>
+                                <div id="maincontainer_team">
+                                    <div id="container_team"></div>
+                                </div>
+                            </div>
+
+                            <!--Content of the Request Overview tab-->
+                            <div class="tabs-pane" id="request-overview">
+                                <div class="aui-group">
+                                    <div class="aui-item">
+                                        <h2 style="float: left">Request Overview</h2>
+                                    </div>
+                                    <div class="aui-item">
+                                        <div style="float: right" class="aui-buttons">
+                                            <button class="aui-button aui-dropdown2-trigger"
+                                                    aria-controls="export-dropdown">Export Requests
+                                            </button>
+                                            <a href="/jira/issues/?jql=">
+                                                <button class="aui-button">Go To Advanced Search</button>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                ## second filter bar buttons
+                                <div class="aui-group">
+                                    <div class="aui-item" id="second-filter" style="display: inline-block">
+                                        <form style="float: left" class="aui">
+                                            <input id="search-issues" placeholder="Search Issues" type="text"
+                                                   class="text">
+                                        </form>
+                                        <div class="aui-buttons">
+                                            <form class="aui">
+                                                <aui-select id="all-projects-dropdown" placeholder="Select project"
+                                                            multiple>
+                                                    <input type="text" class="text" autocomplete="off" role="combobox"
+                                                           id="selector-input" placeholder="Search project">
+                                                    #foreach( $project in $allProjects )
+                                                        <aui-option value="${project.name}"
+                                                            #if($project.name == $currentProject.name)
+                                                                    selected
+                                                            #end
+                                                        >$project.name</aui-option>
+                                                    #end
+                                                </aui-select>
+                                            </form>
+                                            <button class="aui-button aui-dropdown2-trigger"
+                                                    aria-controls="type-dropdown" id="btn-type-dropdown">
+                                                Type
+                                            </button>
+                                            <button class="aui-button aui-dropdown2-trigger"
+                                                    aria-controls="status-dropdown" id="btn-status-dropdown">
+                                                Status
+                                            </button>
+                                            <button class="aui-button aui-dropdown2-trigger"
+                                                    aria-controls="assignee-dropdown" id="btn-assignee-dropdown">
+                                                Assignee
+                                            </button>
+
+                                            <button class="aui-button aui-dropdown2-trigger"
+                                                    aria-controls="more-dropdown" id="btn-more-dropdown">
+                                                More
+                                                <span class="aui-icon aui-icon-small aui-iconfont-add"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+
+                                    ## second filter bar advanced search
+                                    <div class="aui-item" id="jql-search" style="display: none">
+                                        <form style="float: left" class="aui">
+                                            <input style="min-width: 50rem" id="search-issues-textfield"
+                                                   placeholder="Type JQL Query.." type="text" class="text">
+                                        </form>
+
+                                    </div>
+
+                                    <div style="display: inline-block">
+                                        ## search button
+                                        <button style="float: left;"
+                                                class="aui-button aui-button-primary search-button"
+                                                type="button" original-title="Search for issues" resolved=""
+                                                id="jql-search-button" onClick="jqlSearch()">Search
+                                        </button>
+                                    </div>
+
+                                    <div style="display: inline-block; float: right">
+                                        <aui-label for="JQL-switch">Use JQL</aui-label>
+                                        <aui-toggle id="JQL-switch" label="use JQL"></aui-toggle>
+                                    </div>
+                                </div>
+
+                                ## result table
+                                <table id="result-table" class="aui aui-table-sortable">
+                                    <thead>
+                                    <tr>
+                                        <th class="aui-table-column issue-type">Type</th>
+                                        <th class="aui-table-column issue-key">Issue key</th>
+                                        <th class="aui-table-column-unsortable summary">Summary</th>
+                                        <th class="aui-table-column assignee">Assignee</th>
+                                        <th class="aui-table-column reporter">Reporter</th>
+                                        <th class="aui-table-column priority">Priority</th>
+                                        <th class="aui-table-column status">Status</th>
+                                        <th id="table_start_of_work" class="aui-table-column-unsortable"
+                                            style="display: none;">Start of Work
+                                        </th>
+                                        <th id="table_end_of_work" class="aui-table-column-unsortable"
+                                            style="display: none;">End of Work
+                                        </th>
+                                        <th id="table_associated_team" class="aui-table-column-unsortable"
+                                            style="display: none;">Associated Team
+                                        </th>
+                                        ##<th id="table_epic_link" class="aui-table-column-unsortable"
+                                        ##    style="display: none;">Epic Link
+                                        ##</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="jql-results">
+
+                                    </tbody>
+                                </table>
+
+
+                                <script>
+                                    // JQL-Search
+                                    function jqlSearch() {
+
+                                        let query = document.getElementById("search-issues").value === '' ? '' : ' AND text ~ "' + document.getElementById("search-issues").value.isEmpty() + '"';
+                                        let jqlquery = document.getElementById("search-issues-textfield").value;
+                                        let options = {
+                                            method: 'GET',
+                                            headers: {
+                                                'Content-Type': 'application/json;charset=utf-8'
+                                            },
+                                            credentials: 'include'
+                                        }
+                                        let request = new Request(base_url.concat('/rest/api/2/search?jql=', jqlquery, query));
+                                        const location_issues = base_url.concat('/browse/');
+                                        let issuetype_name
+                                        let issuetype_icon
+                                        let issue_id
+                                        let key
+                                        let key_link
+                                        let summary
+                                        let assignee_avatar
+                                        let assignee_name
+                                        let reporter_avatar
+                                        let reporter_name
+                                        let priority_name
+                                        let priority_icon
+                                        let status_name
+                                        let status_icon
+                                        let epic_link
+                                        let end_of_work
+                                        let start_of_work
+                                        let assoc_team
+
+                                        console.log(base_url.concat('/rest/api/2/search?jql=', jqlquery))
+
+                                        fetch(request, options)
+                                                .then(function (response) {
+                                                    return response.json()
+                                                })
+                                                .then(function (data) {
+                                                    //check which items have been checked
+                                                    let checked_criteria = []
+                                                    $('aui-item-checkbox[checked]').each(function () {
+                                                        checked_criteria.push(this.textContent)
+                                                    })
+                                                    let content = '';
+                                                    for (let obj in Array.from(data.issues)) {
+                                                        console.log(obj);
+                                                        console.log(data.issues[obj]);
+
+                                                        issuetype_name = data.issues[obj].fields.issuetype.name
+                                                        issuetype_icon = data.issues[obj].fields.issuetype.iconUrl
+                                                        key = data.issues[obj].key
+                                                        key_link = data.issues[obj].key
+                                                        // onclick="editIssuePopup('+issue_id+')" Issue as POPUP
+                                                        // issue_id = data.issues[obj].id
+                                                        summary = data.issues[obj].fields.summary
+                                                        assignee_avatar = !data.issues[obj].fields.assignee ? 'https://www.gravatar.com/avatar/724bf1b5d1cdedc2a0349cc9a9ebf47d?d=mm&s=24' : data.issues[obj].fields.assignee.avatarUrls['24x24']
+                                                        assignee_name = !data.issues[obj].fields.assignee ? 'unassigned' : data.issues[obj].fields.assignee.displayName
+                                                        reporter_avatar = !data.issues[obj].fields.reporter ? 'https://www.gravatar.com/avatar/724bf1b5d1cdedc2a0349cc9a9ebf47d?d=mm&s=24' : data.issues[obj].fields.reporter.avatarUrls['24x24']
+                                                        reporter_name = !data.issues[obj].fields.reporter ? 'unassigned' : data.issues[obj].fields.reporter.displayName
+                                                        priority_name = data.issues[obj].fields.priority.name
+                                                        priority_icon = data.issues[obj].fields.priority.iconUrl
+                                                        status_name = data.issues[obj].fields.status.name
+                                                        status_icon = data.issues[obj].fields.status.iconUrl
+                                                        ##epic_link = !data.issues[obj].fields.$epic_field.getId() ? '-' : data.issues[obj].fields.$epic_field.getId();
+                                                        start_of_work = !data.issues[obj].fields.$start_field.getId() ? '-' : data.issues[obj].fields.$start_field.getId();
+                                                        end_of_work = !data.issues[obj].fields.$end_field.getId() ? '-' : data.issues[obj].fields.$end_field.getId();
+                                                        assoc_team = !data.issues[obj].fields.$team_field.getId() ? '-' : data.issues[obj].fields.$team_field.getId();
+
+                                                        let custom_field = ''
+
+                                                        //if some criteria has been checked, respective td is added, if not td is added but will not be shown due to display none
+                                                        if (checked_criteria.includes('Start of Work')) {
+                                                            custom_field += '<td id="issue_start_of_work">' + start_of_work + '</td>'
+                                                        } else {
+                                                            custom_field += '<td id="issue_start_of_work" style="display: none;">' + start_of_work + '</td>'
+                                                        }
+                                                        if (checked_criteria.includes('End of Work')) {
+                                                            custom_field += '<td id ="issue_end_of_work">' + end_of_work + '</td>'
+                                                        } else {
+                                                            custom_field += '<td id ="issue_end_of_work" style="display: none;">' + end_of_work + '</td>'
+                                                        }
+                                                        if (checked_criteria.includes('Associated Team')) {
+                                                            custom_field += '<td id="issue_associated_team">' + assoc_team + '</td>'
+                                                        } else {
+                                                            custom_field += '<td id ="issue_associated_team" style="display: none;">' + assoc_team + '</td>'
+                                                        }
+                                                        ##if (checked_criteria.includes('Epic Link')) {
+                                                        ##    custom_field += '<td id="issue_epic_link">' + epic_link + '</td>'
+                                                        ##} else {
+                                                        ##    custom_field += '<td id ="issue_epic_link" style="display: none;">' + epic_link + '</td>'
+                                                        ##}
+
+                                                        content += '<tr>' +
+                                                                '<td class=\"aui-table-column\"> <span class=\"aui-icon aui-icon-small\"><img src=\"' + issuetype_icon + '\" alt=\"Icon\" /></span> ' + issuetype_name + '</td>' +
+                                                                '<td class=\"aui-table-column\"><a target="_blank" rel="noopener noreferrer" href="' + location_issues + key + '">' + key + '</a></td>' +
+                                                                '<td class=\"aui-table-column-unsortable\">' + summary + '</td>' +
+                                                                '<td class=\"aui-table-column\"> <span class=\"aui-avatar aui-avatar-small\"> <span class=\"aui-avatar-inner\"><img src=\"' + assignee_avatar + '\" alt=\"Avatar\" /></span></span> ' + assignee_name + '</td>' +
+                                                                '<td class=\"aui-table-column\"> <span class=\"aui-avatar aui-avatar-small\"> <span class=\"aui-avatar-inner\"><img src=\"' + reporter_avatar + '\" alt=\"Avatar\" /></span></span> ' + reporter_name + '</td>' +
+                                                                '<td class=\"aui-table-column\"> <span class=\"aui-icon aui-icon-small\"><img src=\"' + priority_icon + '\" alt=\"Icon\" /></span> ' + priority_name + '</td>' +
+                                                                '<td class=\"aui-table-column\">' + status_name + '</td>' +
+                                                                custom_field + '</tr>';
+                                                    }
+
+                                                    document.getElementById('jql-results').innerHTML = content;
+                                                    AJS.toInit(function () {
+                                                        AJS.$('#result-table').trigger('update');
+                                                    });
+                                                });
+                                    }
+                                </script>
+                            </div>
+
+                            <script>
+                                window.onload = function () {
+                                    jqlSearch()
+                                }
+                            </script>
+                            ## dropdown popup activated when clicking type
+                            <aui-dropdown-menu id="type-dropdown">
+                                <aui-section>
+                                    <form style="float: left" class="aui">
+                                        <input id="search-issuetype" placeholder="Find issue type"
+                                               aria-autocomplete="list"
+                                               aria-haspopup="true" aria-expanded="true" type="text"
+                                               class="text" onkeyup="searchIssuetype()">
+                                    </form>
+                                </aui-section>
+                                <aui-section id="issue-type-dropdown">
+                                    <span aria-hidden="true" class="aui-dropdown2-heading"
+                                          id="aui-uid-2">Issue Type</span>
+                                </aui-section>
+                            </aui-dropdown-menu>
+
+                            ## Search in dropdown issuetypes
+                            <script>
+                                    ##                                Extract issue types and add them to dropdown
+                                let issueTypes = []
+                                    #foreach( $type in $issueType )
+                                    issueTypes.push('$type.name');
+                                    #end
+                                let issueTypeDropdown = '<span aria-hidden="true" class="aui-dropdown2-heading" id="aui-uid-2">Issue Type</span>'
+                                for (var issueType of issueTypes) {
+                                    issueTypeDropdown += '<aui-item-checkbox class="issue-type-item" interactive>' + issueType + '</aui-item-checkbox>'
+                                }
+                                document.getElementById('issue-type-dropdown').innerHTML = issueTypeDropdown
+
+                                function searchIssuetype() {
+                                    let val = document.getElementById('search-issuetype').value.toUpperCase()
+                                    let results = '<span aria-hidden="true" class="aui-dropdown2-heading" id="aui-uid-2">Issue Type</span>';
+
+                                    for (issueType of issueTypes) {
+                                        if (issueType.toUpperCase().includes(val)) {
+                                            if (typeParams.includes(issueType)) {
+                                                results += '<aui-item-checkbox class="issue-type-item" interactive checked="">' + issueType + '</aui-item-checkbox>'
+                                            } else {
+                                                results += '<aui-item-checkbox class="issue-type-item" interactive>' + issueType + '</aui-item-checkbox>'
+                                            }
+                                        }
+                                    }
+                                    document.getElementById('issue-type-dropdown').innerHTML = results
+                                }
+                            </script>
+
+
+                            ## Function for building the connected final query out of all dropdowns
+                            <script>
+
+                                function buildQuery() {
+                                    let tempQuery = [];
+                                    let resultQuery = "";
+                                    tempQuery.push(typeQuery);
+                                    tempQuery.push(statusQuery);
+                                    tempQuery.push(assigneeQuery);
+                                    tempQuery.push(projectQuery);
+                                    tempQuery.forEach(element => {
+                                        if (element.length >= 2) {
+                                            resultQuery += element + " AND "
+                                        }
+                                    })
+                                    resultQuery = resultQuery.slice(0, -5);
+                                    return resultQuery;
+                                }
+
+                                let users = ['unassigned']
+                                    ## Promise that does the GET Request for Assignable Users and puts their names into Array 'assignableUsers'
+                                function getAssignableUsersPromise() {
+                                    return new Promise(async (resolve, reject) => {
+                                        let options = {
+                                            method: 'GET',
+                                            headers: {
+                                                'Content-Type': 'application/json;charset=utf-8'
+                                            },
+                                            credentials: 'include'
+                                        }
+
+                                        let assignableUsers = []; ## Array for GET request results
+
+                                        ## Do GET request for data and put data into Array 'assignableUsers'
+                                        let user_request = new Request(base_url.concat('/rest/api/2/user/assignable/search?project=', '$currentProject.getKey()'));
+
+                                        let response = await fetch(user_request, options)
+                                        let data = await response.json();
+
+                                        data.forEach((obj, index) => {
+                                            ## add next name to array
+                                            // users.push(obj.name);
+                                            assignableUsers.push(obj.name);
+                                        });
+                                        if (assignableUsers.length > 0) {
+                                            resolve(assignableUsers);
+                                        } else {
+                                            reject(error);
+                                        }
+                                    });
+                                }
+
+                            </script>
+
+                            ## Dropdown type dynamic query update (checkbox)
+                            <script>
+                                var typeQuery = " ";
+                                var typeParams = [];
+                                var typeDropdown = document.getElementById('type-dropdown');
+
+                                typeDropdown.addEventListener('change', function (e) {
+                                    var isChecked = e.target.hasAttribute('checked');
+                                    if (isChecked) {
+                                        console.log(e.target.textContent, 'was checked.');
+                                        if (typeParams.includes(e.target.textContent)) {
+                                        } else {
+                                            typeParams.push(e.target.textContent);
+                                            console.log(typeParams);
+                                        }
+                                    } else {
+                                        console.log(e.target.textContent, 'was unchecked.');
+                                        if (typeParams.includes(e.target.textContent)) {
+                                            ## Unchecked option needs to be deleted from array
+                                            typeParamsCache = typeParams.slice();
+                                            typeParams = [];
+                                            typeParamsCache.forEach((element) => {
+                                                if (element !== e.target.textContent) {
+                                                    typeParams.push(element);
+                                                }
+                                            });
+                                        }
+                                        console.log(typeParams);
+
+                                    }
+
+                                    ## Prepare updated query
+                                    ## Query depending on available status options, change if necessary
+                                    typeQuery = " ";
+                                    ##typeParams.forEach((element) => {
+                                    ##  typeQuery += 'type = "' + element + '" OR ' ;
+                                    ##});
+
+                                    ##typeQuery = typeQuery.slice(0, -3);
+                                    document.getElementById("btn-type-dropdown").innerHTML = "Type: " + typeParams;
+                                    if (typeParams.length == 0) {
+                                        document.getElementById("btn-type-dropdown").innerHTML = "Type"; ##deletes ":"
+                                    }
+                                    console.log(typeQuery);
+
+                                    ## create improved query
+                                    let resultStringType = "";
+                                    typeParams.forEach(element => {
+                                        resultStringType += "'" + element + "',";
+                                    });
+                                    resultStringType = resultStringType.slice(0, -1);
+
+                                    if (typeParams.length > 0) {
+                                        typeQuery = "type IN (" + resultStringType + ")";
+                                    }
+
+                                    ## Input Query into search issues textfield
+                                    document.getElementById('search-issues-textfield').value = buildQuery();
+
+                                });
+
+                                var projectQuery = " ";
+                                var projectParams = [];
+                                var projectDropdown = document.getElementById('all-projects-dropdown');
+
+                                projectDropdown.addEventListener('change', function (e) {
+
+                                    ## Prepare updated query
+                                    ## Query depending on available status options, change if necessary
+                                    projectQuery = " ";
+                                    ##typeParams.forEach((element) => {
+                                    ##  typeQuery += 'type = "' + element + '" OR ' ;
+                                    ##});
+
+                                    ##typeQuery = typeQuery.slice(0, -3);
+
+                                    projectQuery = "project = \"" + projectDropdown.value + "\"";
+
+
+                                    ## Input Query into search issues textfield
+                                    document.getElementById('search-issues-textfield').value = buildQuery();
+
+                                });
+                            </script>
+
+                            ## dropdown popup activated when clicking status
+                            <aui-dropdown-menu id="status-dropdown">
+                                <aui-section>
+                                    <form style="float: left" class="aui">
+                                        <input id="search-requeststatus" placeholder="Find request status"
+                                               aria-autocomplete="list"
+                                               aria-haspopup="true" aria-expanded="true" type="text"
+                                               class="text" onkeyup="searchRequeststatus()">
+                                    </form>
+                                </aui-section>
+                                <aui-section id="request-status-dropdown">
+                                    <span aria-hidden="true" class="aui-dropdown2-heading"
+                                          id="aui-uid-2">Request Status</span>
+                                </aui-section>
+                            </aui-dropdown-menu>
+
+                            ## SEARCH for dropdown
+                            <script>
+                                    ##                                Extract issue types and add them to dropdown
+                                let requestStatuses = []
+                                    #foreach( $status in $statuses )
+                                    requestStatuses.push('$status.name');
+                                    #end
+                                console.log(requestStatuses)
+                                let requestStatusDropdown = '<span aria-hidden="true" class="aui-dropdown2-heading" id="aui-uid-2">Request Status</span>'
+                                for (var requestStatus of requestStatuses) {
+                                    requestStatusDropdown += '<aui-item-checkbox class="request-status-item" interactive>' + requestStatus + '</aui-item-checkbox>'
+                                }
+                                document.getElementById('request-status-dropdown').innerHTML = requestStatusDropdown
+
+                                function searchRequeststatus() {
+                                    let val = document.getElementById('search-requeststatus').value.toUpperCase()
+                                    let results = '<span aria-hidden="true" class="aui-dropdown2-heading" id="aui-uid-2">Request Status</span>';
+
+                                    for (requestStatus of requestStatuses) {
+                                        if (requestStatus.toUpperCase().includes(val)) {
+                                            if (statusParams.includes(requestStatus)) {
+                                                results += '<aui-item-checkbox class="request-status-item" interactive checked="">' + requestStatus + '</aui-item-checkbox>'
+                                            } else {
+                                                results += '<aui-item-checkbox class="request-status-item" interactive>' + requestStatus + '</aui-item-checkbox>'
+                                            }
+                                        }
+                                    }
+
+                                    document.getElementById('request-status-dropdown').innerHTML = results
+                                }
+                            </script>
+
+
+                            ## PROBLEMS: canceled no recognized type yet (typeerror cause)
+                            ## type dropdown still needed
+                            ## much redundant code with the query picker
+                            ## querys are depending on the frontend type names (hardcoded)
+                            ## Dropdown Texts dont change with changes of options
+
+
+
+
+                            ## Dropdown status dynamic query update (checkbox)
+                            <script>
+                                var statusQuery = " ";
+                                var statusParams = [];
+                                var statusDropdown = document.getElementById('status-dropdown');
+                                statusDropdown.addEventListener('change', function (e) {
+                                    var isChecked = e.target.hasAttribute('checked');
+                                    if (isChecked) {
+                                        console.log(e.target.textContent, 'was checked.');
+                                        if (statusParams.includes(e.target.textContent)) {
+                                        } else {
+                                            statusParams.push(e.target.textContent);
+                                            console.log(statusParams);
+                                        }
+                                    } else {
+                                        console.log(e.target.textContent, 'was unchecked.');
+                                        if (statusParams.includes(e.target.textContent)) {
+                                            ## Unchecked option needs to be deleted from array
+                                            statusParamsCache = statusParams.slice();
+                                            statusParams = [];
+                                            statusParamsCache.forEach((element) => {
+                                                if (element !== e.target.textContent) {
+                                                    statusParams.push(element);
+                                                }
+                                            });
+                                        }
+                                        console.log(statusParams);
+                                    }
+
+                                    ## Prepare updated query
+                                    ## Query depending on available status options, change if necessary
+                                    statusQuery = " ";
+                                    ##statusParams.forEach((element) => {
+                                    ##    statusQuery += 'status = "' + element + '" OR ' ;
+                                    ##});
+                                    ##statusQuery = statusQuery.slice(0, -3);
+                                    document.getElementById("btn-status-dropdown").innerHTML = "Status: " + statusParams;
+                                    if (statusParams.length == 0) {
+                                        document.getElementById("btn-status-dropdown").innerHTML = "Status"; ##deletes ":"
+                                    }
+                                    console.log(statusQuery);
+
+                                    ## create improved query
+                                    let resultStringStatus = "";
+
+                                    statusParams.forEach(element => {
+                                        resultStringStatus += "'" + element + "',";
+                                    });
+                                    resultStringStatus = resultStringStatus.slice(0, -1);
+
+                                    if (statusParams.length > 0) {
+                                        statusQuery = "status IN (" + resultStringStatus + ")";
+                                    }
+
+                                    ## Input Query into search issues textfield
+                                    document.getElementById('search-issues-textfield').value = buildQuery();
+
+                                });
+                            </script>
+
+
+                            ## dropdown popup activated when clicking assignee
+                            <aui-dropdown-menu id="assignee-dropdown">
+                                <aui-section>
+                                    <form style="float: left" class="aui">
+                                        <input id="search-assignee" placeholder="Find Assignee"
+                                               aria-autocomplete="list"
+                                               aria-haspopup="true" aria-expanded="true" type="text"
+                                               class="text" onkeyup="searchAssignee()">
+                                    </form>
+                                </aui-section>
+                                <aui-section id="assignee-section">
+                                    <span aria-hidden="true" class="aui-dropdown2-heading"
+                                          id="aui-uid-2">Assignee</span>
+                                    <aui-item-checkbox id="unassigned-option" interactive>unassigned</aui-item-checkbox>
+                                </aui-section>
+                            </aui-dropdown-menu>
+
+                            ## Dropdown Search Assignees
+                            <script>
+                                function searchAssignee() {
+                                    let val = document.getElementById('search-assignee').value.toUpperCase()
+                                    let results = '<span aria-hidden="true" class="aui-dropdown2-heading" id="aui-uid-2">Assignee</span>';
+
+                                    for (user of users) {
+                                        if (user.toUpperCase().includes(val)) {
+                                            if (assigneeParams.includes(user)) {
+                                                results += '<aui-item-checkbox interactive checked="">' + user + '</aui-item-checkbox>'
+                                            } else {
+                                                results += '<aui-item-checkbox interactive>' + user + '</aui-item-checkbox>'
+                                            }
+                                        }
+                                    }
+                                    document.getElementById('assignee-section').innerHTML = results
+                                }
+                            </script>
+
+                            <script>
+                                    ## function that waits for the AssignableUsers to get retrieved
+                                    ## from Promise and GET Request and then fills in the Dropdown Options
+                                async function fillAssignableUsers() {
+
+                                    let assignableUsers = await getAssignableUsersPromise(); ## awaits Promise from GET Request Function
+
+                                    let replacements = {
+                                        id: 0
+                                    };
+
+                                    ##fill in Dropdown Option for every user in AssignableUsers
+                                    assignableUsers.forEach(user => {
+                                        let stringWithPlaceholders = '<aui-item-checkbox id="assignee{id}" interactive></aui-item-checkbox>';
+                                        users.push(user);
+                                        let string = stringWithPlaceholders.replace(
+                                                /{(\w+)}/g,
+                                                (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
+                                                        replacements.hasOwnProperty(placeholderWithoutDelimiters) ?
+                                                                replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters
+                                        );
+                                        document.getElementById('assignee-section').innerHTML += string;
+                                        stringWithPlaceholders = 'assignee{id}';
+                                        // replacements = {
+                                        //     id: 0
+                                        // };
+                                        string = stringWithPlaceholders.replace(
+                                                /{(\w+)}/g,
+                                                (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
+                                                        replacements.hasOwnProperty(placeholderWithoutDelimiters) ?
+                                                                replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters
+                                        );
+                                        document.getElementById(string).innerHTML = user;
+                                        replacements.id++;
+                                    });
+
+                                };
+                                    ## execute function
+                                fillAssignableUsers();
+
+                            </script>
+
+                            ## Dropdown assignee dynamic query update (checkbox)
+                            <script>
+                                var assigneeQuery = " ";
+                                var assigneeParams = [];
+                                var assigneeDropdown = document.getElementById('assignee-dropdown');
+                                assigneeDropdown.addEventListener('change', function (e) {
+                                    var isChecked = e.target.hasAttribute('checked');
+                                    if (isChecked) {
+                                        console.log(e.target.textContent, 'was checked.');
+                                        if (assigneeParams.includes(e.target.textContent)) {
+                                        } else {
+                                            assigneeParams.push(e.target.textContent);
+                                            console.log(assigneeParams);
+                                        }
+                                    } else {
+                                        console.log(e.target.textContent, 'was unchecked.');
+                                        if (assigneeParams.includes(e.target.textContent)) {
+                                            ## Unchecked option needs to be deleted from array
+                                            assigneeParamsCache = assigneeParams.slice();
+                                            assigneeParams = [];
+                                            assigneeParamsCache.forEach((element) => {
+                                                if (element !== e.target.textContent) {
+                                                    assigneeParams.push(element);
+                                                }
+                                            });
+                                        }
+                                        console.log(assigneeParams);
+                                    }
+                                    ## Prepare updated query
+                                    ## Query depending on available status options, change if necessary
+                                    assigneeQuery = " ";
+                                    assigneeParams.forEach((element) => {
+                                        if (element === "unassigned") {
+                                            assigneeQuery += 'assignee is Empty' + ' OR ';
+                                        } else {
+                                            assigneeQuery += 'assignee = "' + element + '" OR ';
+                                        }
+                                    });
+                                    assigneeQuery = assigneeQuery.slice(0, -3);
+                                    document.getElementById("btn-assignee-dropdown").innerHTML = "Assignee: " + assigneeParams;
+                                    if (assigneeParams.length == 0) {
+                                        document.getElementById("btn-assignee-dropdown").innerHTML = "Assignee"; ##deletes ":"
+                                    }
+                                    console.log(assigneeQuery);
+
+                                    ## Input Query into search issues textfield
+                                    document.getElementById('search-issues-textfield').value = buildQuery();
+                                });
+
+                                AJS.$('#result-table').trigger('update');
+                            </script>
+
+
+                            ## dropdown popup activated when clicking more
+                            <aui-dropdown-menu id="more-dropdown">
+                                <aui-section label="All Criteria">
+                                    <aui-item-checkbox id="start_of_work" interactive>Start of Work</aui-item-checkbox>
+                                    <aui-item-checkbox id="end_of_work" interactive>End of Work</aui-item-checkbox>
+                                    <aui-item-checkbox id="associated_team" interactive>Associated Team
+                                    </aui-item-checkbox>
+                                    ##                                    <aui-item-checkbox id="epic_link" interactive>Epic Link</aui-item-checkbox>
+                                </aui-section>
+
+
+                            </aui-dropdown-menu>
+                            <script>
+                                var more_dropdown = document.getElementById('more-dropdown');
+                                more_dropdown.addEventListener('change', function (e) {
+                                    var isChecked = e.target.hasAttribute('checked');
+                                    if (isChecked) {
+                                        $("th#table_" + e.target.id).css('display', 'table-cell');
+                                        $("td#issue_" + e.target.id).css('display', 'table-cell');
+                                    } else {
+                                        $("th#table_" + e.target.id).css('display', 'none');
+                                        $("td#issue_" + e.target.id).css('display', 'none');
+                                    }
+                                });
+                            </script>
+
+                            ## dropdown popup activated when clicking export --> necessary exports need to be discussed
+                            ##                            <aui-dropdown-menu id="export-dropdown">
+                            ##                                <aui-section label="Search">
+                            ##                                    <form style="float: left" class="aui">
+                            ##                                        <input id="search-issues" placeholder="Find Criteria.."
+                            ##                                               aria-autocomplete="list"
+                            ##                                               aria-haspopup="true" aria-expanded="true" type="text"
+                            ##                                               class="text">
+                            ##                                    </form>
+                            ##                                </aui-section>
+                            ##                                <aui-section>
+                            ##                                    <aui-item-link href="">Printable</aui-item-link>
+                            ##                                    <aui-item-link href="">Full Content</aui-item-link>
+                            ##                                </aui-section>
+                            ##                                <aui-section>
+                            ##                                    <aui-item-link href="">RSS (Issues)</aui-item-link>
+                            ##                                    <aui-item-link href="http://amazon.com">RSS (Comments)</aui-item-link>
+                            ##                                </aui-section>
+                            ##                                <aui-section>
+                            ##                                    <aui-item-link href="">CSV (All fields)</aui-item-link>
+                            ##                                    <aui-item-link href="">CSV (Current fields)</aui-item-link>
+                            ##                                    <aui-item-link href="">HTML (All fields)</aui-item-link>
+                            ##                                    <aui-item-link href="">HTML (Current fields)
+                            ##                                    </aui-item-link>
+                            ##                                    <aui-item-link href="">XML</aui-item-link>
+                            ##                                </aui-section>
+                            ##                                <aui-section>
+                            ##                                    <aui-item-link href="">Word</aui-item-link>
+                            ##                                </aui-section>
+                            ##                                <aui-section>
+                            ##                                    <aui-item-link href="">Dashboard charts</aui-item-link>
+                            ##                                </aui-section>
+                            ##                            </aui-dropdown-menu>
+
+                            <script>
+                                var toggle = document.getElementById('JQL-switch');
+                                toggle.addEventListener('change', function (e) {
+                                    var isChecked = toggle.checked;     // new value of the toggle
+
+                                    var x = document.getElementById("second-filter");
+                                    var y = document.getElementById("jql-search");
+
+                                    if (isChecked) {
+                                        x.style.display = "none";
+                                        y.style.display = "inline-block";
+                                    } else {
+                                        x.style.display = "inline-block";
+                                        y.style.display = "none";
+                                    }
+
+                                });
+                                window.onbeforeunload = null;
+                            </script>
+                        </div>
+                    </nav>
+                </main>
+            </div>
+
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>

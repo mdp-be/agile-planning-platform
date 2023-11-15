@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}" plugins-version="2"> 
+  <plugin-info> 
+    <description>${project.description}</description>  
+    <version>${project.version}</version>
+    <startup>late</startup>
+    <vendor name="${project.organization.name}" url="${project.organization.url}"/>  
+    <param name="plugin-icon">images/pluginIcon.png</param>  
+    <param name="plugin-logo">images/pluginLogo.png</param> 
+  </plugin-info>
+
+  <!-- add our i18n resource -->  
+  <resource type="i18n" name="i18n" location="agile-planning-platform"/>
+
+  <!-- add our web resources -->  
+  <web-resource key="agile-planning-platform-resources" name="agile-planning-platform Web Resources"> 
+    <dependency>com.atlassian.auiplugin:ajs</dependency>  
+    <!--    <resource type="download" name="agile-planning-platform.js" location="/js/agile-planning-platform.js"/>-->  
+    <resource type="download" name="main-page-style.css" location="/style/main-page-style.css"/>  
+    <resource type="download" name="images/" location="/images"/>  
+    <context>agile-planning-platform</context> 
+  </web-resource>
+  <web-resource key="app-my-team" name="agile-planning-platform Web Resources">
+    <resource type="download" name="main-page-style.css" location="/style/my-team-style.css"/>
+    <context>agile-planning-platform</context>
+  </web-resource>
+  <web-resource key="app-team-management" name="agile-planning-platform Web Resources">
+    <resource type="download" name="main-page-style.css" location="/style/team-management-style.css"/>
+    <context>agile-planning-platform</context>
+  </web-resource>
+
+  <!-- dropdown which has entries: My planner, Project Settings -->
+  <web-section name="Agile Planner Nav Bar Top" i18n-name-key="agile-planner-nav-bar-top.name" key="agile-planner-nav-bar-top" location="agile-planner-nav-bar-top-item-link" weight="1000">
+    <description key="agile-planner-nav-bar-top.description">The mySection Plugin</description>
+  </web-section>
+  <web-item name="Agile Planner Nav Bar Top Item" i18n-name-key="agile-planner-nav-bar-top-item.name" key="agile-planner-nav-bar-top-item" section="system.top.navigation.bar" weight="1000"> 
+    <description key="agile-planner-nav-bar-top-item.description">Agile Planning</description>  
+    <label>Agile Planning</label>  
+    <link linkId="agile-planner-nav-bar-top-item-link"/> 
+  </web-item>  
+  <web-item name="Agile Planner" i18n-name-key="agile-planner.name" key="agile-planner" section="agile-planner-nav-bar-top-item-link/agile-planner-nav-bar-top" weight="900"> 
+    <description key="agile-planner-nav-bar-top-item.description">My Planner</description>  
+    <label>My Planner</label>  
+    <link>/plugins/servlet/agile-planning/planner</link> 
+  </web-item>
+
+  <!-- for project settings -->  
+  <web-section name="Agile Planner Project Settings Section" i18n-name-key="agile-planner-project-settings.name" key="agile-planner-project-settings" location="atl.jira.proj.config" weight="1000"> 
+    <description key="agile-planner-project-settings.description">Agile Planning Project Settings Section</description> 
+  </web-section>  
+  <web-item name="Agile Planner Project Settings" i18n-name-key="item_in_agile-planner-project-settings.name" key="item_in_agile-planner-project-settings" section="atl.jira.proj.config/agile-planner-project-settings"> 
+    <description key="item_in_agile-planner-project-settings.description">Agile Planner Project Settings</description>  
+    <label>Agile Planner</label>  
+    <link>/plugins/servlet/agile-planning/planner/settings/project</link> 
+  </web-item>
+  <web-item name="Agile Planner My Team" i18n-name-key="planner-team-management.name" key="agile-planner-my-team" section="agile-planner-nav-bar-top-item-link/agile-planner-nav-bar-top" weight="1000">
+    <description key="agile-planner-nav-bar-top-item.description">My Team</description>
+    <label>My Team</label>
+    <link>/plugins/servlet/agile-planning/planner/my-team</link>
+  </web-item>
+  <web-item name="Agile Planner Team Manager" i18n-name-key="planner-team-management.name" key="agile-planner-team-management" section="agile-planner-nav-bar-top-item-link/agile-planner-nav-bar-top" weight="1000"> 
+    <description key="agile-planner-nav-bar-top-item.description">Team Management</description>  
+    <label>Team Management</label>  
+    <link>/plugins/servlet/agile-planning/planner/team-management</link>
+  </web-item>
+
+
+  <!-- for general settings -->  
+  <web-section key="agile_planner_general_settings_section" location="admin_plugins_menu"> 
+    <label key="Agile Planning Platform">Agile Planning Platform</label> 
+  </web-section>  
+  <web-item name="Agile Planner General Settings" i18n-name-key="item_in_agile-planner-general-settings.name" key="item_in_agile-planner-general-settings" section="admin_plugins_menu/agile_planner_general_settings_section"> 
+    <description key="item_in_agile-planner-general-settings.description">General Settings</description>  
+    <label>General Settings</label>  
+    <link>/plugins/servlet/agile-planning-general-settings</link> 
+  </web-item>
+
+  <!--  AO descriptors  -->
+  <ao key="app-teamservice">
+    <description>Active Object for APP teamservice</description>
+    <entity>de.bearingpoint.app.capacityplanner.teamfunction.APPTeam</entity>
+    <entity>de.bearingpoint.app.capacityplanner.teamfunction.APPUser</entity>
+    <entity>de.bearingpoint.app.capacityplanner.teamfunction.APPUserToTeam</entity>
+  </ao>
+  <ao key="app-skilldatabase">
+    <description>Active Object for APP teamservice</description>
+    <entity>de.bearingpoint.app.skilldatabase.ao.SkillDBUserEntry</entity>
+  </ao>
+
+  <!-- Servlets for pages -->  
+  <servlet name="planner Main" i18n-name-key="planner-main.name" key="planner-main" class="de.bearingpoint.app.capacityplanner.servlets.planner.MainPageServlet"> 
+    <description key="MainPageServlet.description">Main Planner servlet</description>  
+    <url-pattern>/agile-planning/planner</url-pattern> 
+  </servlet>  
+  <servlet name="planner Project Settings" i18n-name-key="planner-project-settings.name" key="planner-project-settings" class="de.bearingpoint.app.capacityplanner.servlets.settings.project.ProjectSettingsServlet"> 
+    <description key="ProjectSettingsServlet.description">Project Settings servlet</description>  
+    <url-pattern>/agile-planning/planner/settings/project</url-pattern> 
+  </servlet>  
+  <servlet name="planner General Settings" i18n-name-key="planner-general-settings.name" key="planner-general-settings" class="de.bearingpoint.app.capacityplanner.servlets.settings.general.GeneralSettingsServlet"> 
+    <description key="GeneralSettingsServlet.description">General Settings servlet</description>  
+    <url-pattern>/agile-planning-general-settings</url-pattern> 
+  </servlet>  
+  <servlet name="planner Team Management" i18n-name-key="planner-team-management.name" key="planner-team-management" class="de.bearingpoint.app.capacityplanner.servlets.settings.project.TeamManagementServlet"> 
+    <description key="TeamManagementServlet.description">Team Management servlet</description>  
+    <url-pattern>/agile-planning/planner/team-management</url-pattern>
+  </servlet>
+  <servlet name="planner My Team" i18n-name-key="planner-my-team.name" key="planner-my-team" class="de.bearingpoint.app.capacityplanner.servlets.settings.project.MyTeamServlet">
+    <description key="MyTeam.description">My Team servlet</description>
+    <url-pattern>/agile-planning/planner/my-team</url-pattern>
+  </servlet>
+  <servlet name="issue Mockup" i18n-name-key="planner-team-management.name" key="issue mockup" class="de.bearingpoint.app.capacityplanner.servlets.settings.project.IssueMockUpServlet">
+    <description>A mock up servlet to show the issues of user and test the functions in class IssueManager</description>  
+    <url-pattern>/issuemockup</url-pattern> 
+  </servlet>
+  <servlet name="skill Database" i18n-name-key="skill-database.name" key="skill-database" class="de.bearingpoint.app.skilldatabase.servlets.SkillDBServlet">
+  <description>Page for Skill Database</description>
+  <url-pattern>/agile-planning/skilldb/main</url-pattern>
+</servlet>
+
+  <!-- REST Ressource -->
+  <rest name="APP-Teamservice REST" i18n-name-key="app-teamservice-rest.name" key="app-teamservice-rest" path="/appteamservice" version="1.0">
+    <description key="app-teamservice-rest.description">REST API to access teamservice functionality</description>
+  </rest>
+
+  <!-- Customfield Associated Team -->
+<!--  <customfield-type name="Associated Team Field" i18n-name-key="associated-team-field.name" key="associatedteamfield" class="com.example.plugins.tutorial.customfields.JiraCustomField">-->
+<!--    <description>A text field only editable by those with admin permissions</description>-->
+<!--    <resource name="view" type="velocity" location="templates/plugins/fields/view/view-basictext.vm"/>-->
+<!--    <resource name="edit" type="velocity" location="/templates/edit.vm"/>-->
+<!--    <resource name="xml" type="velocity" location="templates/plugins/fields/xml/xml-basictext.vm"/>-->
+<!--  </customfield-type>-->
+</atlassian-plugin>

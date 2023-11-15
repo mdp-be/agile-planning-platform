@@ -1,0 +1,400 @@
+## Atlassian resources
+$webResourceManager.requireResource("com.atlassian.auiplugin:ajs")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-button")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-toggle")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-tabs")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-forms")
+$webResourceManager.requireResource("com.atlassian.auiplugin:message")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-experimental-iconfont")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-table-sortable")
+$webResourceManager.requireResource("com.atlassian.jira.jira-quick-edit-plugin:quick-edit-issue")
+$webResourceManager.requireResource("com.atlassian.jira.view.issue")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select2")
+$webResourceManager.requireResource("com.atlassian.auiplugin:dialog2")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-inline-dialog2")
+
+
+
+## Other resources
+##$webResourceManager.requireResource("de.bearingpoint.app.backend:entrypoint-dynamictable_team")
+$webResourceManager.requireResource("de.bearingpoint.app.backend:agile-planning-platform-resources")
+
+<html>
+<head>
+    <title>Agile Planning Platform</title>
+    <!-- atl.general for general jira page -->
+    <meta name="decorator" content="atl.general">
+</head>
+<body>
+
+<div id="page">
+    <div id="content">
+        <div class="aui-page-header">
+            <div class="aui-page-header-inner">
+                <div class="aui-page-header-image">
+                <span class="aui-avatar aui-avatar-project aui-avatar-large">
+                    <span class="aui-avatar-inner" id="logo">
+                        <img alt="" class="logo" role="presentation"/>
+                    </span>
+                </span>
+                </div>
+                <div class="aui-page-header-main">
+                    <h1>
+                        Agile Planning Platform - $!userName
+                    </h1>
+                </div>
+            </div>
+        </div>
+        <main class="aui-page-panel" id="main" role="main">
+            <div class="aui-page-panel-inner">
+                <div class="aui-page-panel-nav">
+                    <nav class="aui-navgroup aui-navgroup-vertical" aria-label="page">
+                        <div class="aui-nav-heading" title="Requests">
+                            <strong>Requests</strong>
+                        </div>
+                        #set( $create_request_href =
+                            "/jira/secure/CreateIssue!default.jspa?issuetype=" + $request_id.id +
+                            "&pid=" + $currentProject.id )
+
+                        #if(!$currentProject.issueTypes.contains($request_id))
+                            <div class="aui-message aui-message-warning">
+                                <p>Please enable Request issue type for project $currentProject.name.</p>
+                            </div>
+                        #end
+                        <ul class="aui-nav" title="Requests actions">
+                            <li>
+                                ##                                href=$create_request_href
+                                <a class="aui-nav-item" id="create-request">
+                                    <span class="aui-icon aui-icon-small aui-iconfont-list-add"></span>
+                                    <span class="aui-nav-item-label">Create Request</span>
+                                </a>
+
+                                <script>
+                                    AJS.$("#create-request").click(function (e) {
+                                        var createCreateIssueForm = require('quick-edit/form/factory/create-issue');
+                                        createCreateIssueForm({
+                                            issueType: '$request_id.id',
+                                            pid: '$currentProject.id'
+                                        }).asDialog({
+                                            windowTitle: 'Create Issue'
+                                        }).show();
+                                    })
+                                </script>
+                            </li>
+                        </ul>
+
+
+                        <div class="aui-nav-heading" title="Members">
+                            <strong>Members</strong>
+                        </div>
+                        <ul class="aui-nav" title="Members actions">
+                            <li>
+                                <a class="aui-nav-item"
+                                   href="$baseurl/plugins/servlet/agile-planning/planner/team-management">
+                                    <span class="aui-icon aui-icon-small aui-iconfont-people-group"></span>
+                                    <span class="aui-nav-item-label">Manage Teams</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="aui-nav-heading" title="Skill Database">
+                            <strong>Skill Database</strong>
+                        </div>
+                        <ul class="aui-nav" title="Skill Database actions">
+                            <li>
+                                <a class="aui-nav-item"
+                                   href="$baseurl/plugins/servlet/agile-planning/skilldb/main">
+                                    <span class="aui-icon aui-icon-small aui-iconfont-people-group"></span>
+                                    <span class="aui-nav-item-label">View Skill Database</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                    </nav>
+                </div>
+                <main id="main" role="main" class="aui-page-panel-content">
+
+                    <div>
+                        <div>
+                            <form style="float: left" class="aui">
+                                <input id="search-teams" placeholder="Search Team" type="text"
+                                       class="text">
+                            </form>
+                            <button style="float: left;"
+                                    class="aui-button aui-button-primary search-button"
+                                    type="button" original-title="Search" resolved=""
+                                    id="searchbutton" onclick="searchTable()">Search
+                            </button>
+                        </div>
+                        <div>
+                            <button class="aui-button aui-button-primary" id="create-skillset" style="float: right;">
+                                Create Skillset
+                            </button>
+                        </div>
+                    </div>
+##                    <div>
+##                        <form class="aui">
+##                            <label for="select2-skills">Skills:</label>
+##                            <select id="select2-skills" multiple>
+##                                <option value="CONF">Confluence</option>
+##                                <option value="JIRA">JIRA</option>
+##                                <option value="BAM">Bamboo</option>
+##                                <option value="JAG">JIRA Agile</option>
+##                                <option value="CAP">JIRA Capture</option>
+##                                <option value="AUI">AUI</option>
+##                            </select>
+##                        </form>
+##                    </div>
+                    <table class="aui aui-table-sortable">
+                        <thead>
+                        <tr>
+                            <th class="aui-table-column-issue-key">User</th>
+                            <th>Skill 1</th>
+                            <th>Skill 2</th>
+                            <th class="aui-table-column-unsortable">Skill 3</th>
+                        <tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Sean Paul</td>
+                            <td>Excel</td>
+                            <td>Java</td>
+                            <td>Database Management</td>
+                        </tr>
+                        <tr>
+                            <td>Clarissa Rijpman</td>
+                            <td>Python</td>
+                            <td>JavaScript</td>
+                            <td>Google Cloud Computing Certified</td>
+                        </tr>
+                        <tr>
+                            <td>Jürgen Jürgensson</td>
+                            <td>Word</td>
+                            <td>Powerpoint</td>
+                            <td>MS Teams</td>
+                        </tr>
+                        #foreach($!skill in $!skillSets)
+                        <tr>
+                            <td>$skill.userKey</td>
+                            <td>$skill.topSkill1</td>
+                            <td>$skill.topSkill2</td>
+                            <td>$skill.topSkill3</td>
+                        </tr>
+                        #end
+                        </tbody>
+                    </table>
+
+                    ##Create new entries
+                    <section
+                            id="edit-team-dialog"
+                            class="aui-dialog2 aui-dialog2-large aui-layer"
+                            role="dialog"
+                            tabindex="-1"
+                            aria-labelledby="dialog-show-button--heading"
+                            hidden
+                    >
+                        <header class="aui-dialog2-header">
+                            <h1 class="aui-dialog2-header-main" id="dialog-show-button--heading">Add Team
+                                Member</h1>
+                            <button class="aui-close-button" type="button" aria-label="close"></button>
+                        </header>
+                        <div class="aui-dialog2-content">
+                            <div>
+                                <form class="aui" id="add-user-form">
+                                    <div class="field-group">
+                                        <label for="text-input">To be added users
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input type="text" name="add-user-user-picker" id="add-user-user-picker"
+                                               multiple="multiple"
+                                               class="text long-field" data-placeholder="Select user">
+                                    </div>
+                                    <div class="buttons-container">
+                                        <div class="buttons">
+                                            <input class="aui-button aui-button-primary" type="submit" value="Save"
+                                                   id="submit-user-button">
+                                            <a class="cancel" id="cancel">Cancel</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div>
+                                <table class="aui aui-table-sortable">
+                                    <thead>
+                                    <tr>
+                                        <th class="user">User</th>
+                                        <th class="role">Role</th>
+                                        <th class="action aui-table-column-unsortable">Actions</th>
+                                    </tr>
+                                    </thead>
+
+                                    <tbody id="team-members-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+##                        Create Skillset
+                        <section
+                                id="create-skillset-dialog"
+                                class="aui-dialog2 aui-dialog2-medium aui-layer"
+                                role="dialog"
+                                tabindex="-1"
+                                aria-labelledby="dialog-show-button--heading"
+                                hidden
+                        >
+                            <header class="aui-dialog2-header">
+                                <h1 class="aui-dialog2-header-main" id="dialog-show-button--heading">Create a new Skillset</h1>
+                                <button class="aui-close-button" type="button" aria-label="close"
+                                        onclick="hidedialog('create-team-dialog')"></button>
+                            </header>
+                            <div class="aui-dialog2-content">
+                                <form class="aui" id="teamlead-picker-form">
+                                    <div class="field-group">
+                                        <label for="text-input">User
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input class="text medium-long-field" type="text"
+                                               id="teamname-input" name="teamName" placeholder="e.g. Maxima Mustermann">
+                                        <div class="description">Enter the user's name.</div>
+                                        <div class="description"><h3 style="color:red" id="warning-duplicate-team">
+                                        </h3></div>
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="text-input">Top Skill 1
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input type="text" name="topskill1" id="topskill1"
+                                               class="text medium-long-field" data-placeholder="e.g. Intercultural Skills">
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="text-input">Top Skill 2
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input type="text" name="topskill2" id="topskill2"
+                                               class="text medium-long-field" data-placeholder="e.g. Front-End Development">
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="text-input">Top Skill 3
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input type="text" name="topskill3" id="topskill3"
+                                               class="text medium-long-field" data-placeholder="e.g. Accounting">
+                                    </div>
+                                    <div class="buttons-container">
+                                        <div class="buttons">
+                                            <input class="aui-button aui-button-primary" type="submit" value="Save"
+                                                   id="comment-save-button">
+                                            <a class="aui-button cancel">Cancel</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+
+                        <footer class="aui-dialog2-footer">
+                        </footer>
+
+                        <script>
+                            AJS.$('#add-user-user-picker').auiSelect2({
+                                hasAvatar: true, // auiSelect2 speciffic option, adds styling needed to properly display avatars
+                                multiple: true, // make the control a multi-select
+                                allowClear: true,
+                                ajax: {
+                                    url: base_url + '/rest/api/2/user/picker', // JIRA URL to the REST end-point
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    cache: true,
+                                    // query parameters for the remote ajax call
+                                    data: function data(term) {
+                                        return {
+                                            query: term,
+                                            maxResults: 100,
+                                            showAvatar: true
+                                        };
+                                    },
+                                    // parse data from the server into form select2 expects
+                                    results: function results(data) {
+                                        let filtered = [];
+                                        for (let i = 0; i < data.total; i++) {
+                                            if (!user_list.includes(data.users[i].key)) {
+                                                filtered.push(data.users[i])
+                                            }
+                                        }
+                                        return {
+                                            results: filtered
+                                        };
+                                    },
+                                },
+                                // specify id parameter of each user entity
+                                id: function id(user) {
+                                    return user.key;
+                                },
+                                // define how selected element should look like
+                                formatSelection: function formatSelection(user) {
+                                    var avatarHtml = aui.avatar.avatar({
+                                        size: 'small',
+                                        avatarImageUrl: user.avatarUrl
+                                    });
+                                    return avatarHtml + Select2.util.escapeMarkup(user.displayName);
+                                },
+                                // define how single option should look like
+                                formatResult: function formatResult(user, container, query, escapeMarkup) {
+                                    // format result string
+                                    var resultText = user.displayName + ' - (' + user.name + ')';
+                                    var avatarHtml = aui.avatar.avatar({
+                                        size: 'small',
+                                        avatarImageUrl: user.avatarUrl
+                                    });
+                                    var higlightedMatch = [];
+                                    // we need this to disable html escaping by select2 as we are doing it on our own
+                                    var noopEscapeMarkup = function noopEscapeMarkup(s) {
+                                        return s;
+                                    }
+                                    // highlight matches of the query term using matcher provided by the select2 library
+                                    Select2.util.markMatch(escapeMarkup(resultText), escapeMarkup(query.term), higlightedMatch, noopEscapeMarkup);
+                                    // convert array to string
+                                    higlightedMatch = higlightedMatch.join("");
+                                    return avatarHtml + higlightedMatch;
+                                },
+                                // define message showed when there are no matches
+                                formatNoMatches: function formatNoMatches(query) {
+                                    return 'No users found who matched your input';
+                                }
+                            });
+
+                            AJS.$('#add-user-form').on('submit', function (event) {
+                                event.preventDefault();
+                                const json = AJS.$('#add-user-user-picker').select2('data');
+                                fetch(base_url + '/rest/appteamservice/1.0/team/' + active_team, {
+                                    method: 'PUT',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify(json)
+                                }).then(res => {
+                                    console.log('Request complete! response:', res.status);
+                                    if (res.status === 201) {
+                                        console.log('success')
+                                        fetchTeamMembers(active_team)
+                                    } else if (res.status === 500) {
+                                        console.log('ERROR')
+                                    }
+                                });
+                            });
+                        </script>
+                    </section>
+
+
+
+                </main>
+            </div>
+        </main>
+    </div>
+</div>
+<script>
+    AJS.$("#select2-skills").auiSelect2();
+
+    // Shows the create team dialog
+    AJS.$('#create-skillset').click(function (e) {
+        e.preventDefault();
+        AJS.dialog2('#create-skillset-dialog').show();
+    });
+</script>
+</body>
+</html>

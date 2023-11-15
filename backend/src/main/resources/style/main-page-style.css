@@ -1,0 +1,21 @@
+th.aui-table-column{
+width: 100px;
+}
+
+th.aui-table-column.assignee{
+width: 150px;
+}
+
+th.aui-table-column.reporter{
+width: 150px;
+}
+
+th.aui-table-column.summary{
+width: 400px;
+}
+
+
+img.logo{
+ background-size: cover;
+ background-image: url("../../download/resources/de.bearingpoint.app.backend:agile-planning-platform-resources/images/DekaGruppe_Logo.png");
+ }

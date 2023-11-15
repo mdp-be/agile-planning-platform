@@ -1,0 +1,520 @@
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-button")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-toggle")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-table-sortable")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-avatar")
+$webResourceManager.requireResource("com.atlassian.auiplugin:dialog2")
+$webResourceManager.requireResource("com.atlassian.jira.jira-quick-edit-plugin:quick-edit-issue")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select2")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-inline-dialog2")
+$webResourceManager.requireResource("de.bearingpoint.app.backend:app-team-management")
+
+<html lang="en">
+<head>
+    <title>Team Management</title>
+    <meta name="decorator" content="atl.general">
+</head>
+<body class="aui-page-focused">
+
+<script>
+    let base_url = '$baseurl';
+    let active_team;
+    let user_list = [];
+</script>
+
+<div id="page">
+    <div id="content">
+        <section>
+            <div class="aui-page-header">
+                <div class="aui-page-header-inner">
+                    <div class="aui-page-header-main">
+                        <h1>Team Management</h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="aui-page-panel">
+                <div class="aui-page-panel-inner">
+                    <main id="main" role="main" class="aui-page-panel-content">
+                        <div>
+                            <div>
+                                <form style="float: left" class="aui">
+                                    <input id="search-teams" placeholder="Search Team" type="text"
+                                           class="text">
+                                </form>
+                                <button style="float: left;"
+                                        class="aui-button aui-button-primary search-button"
+                                        type="button" original-title="Search" resolved=""
+                                        id="searchbutton" onclick="searchTable()">Search
+                                </button>
+                            </div>
+                            <div>
+                                <button class="aui-button aui-button-primary" id="create-team" style="float: right;">
+                                    Create Team
+                                </button>
+                            </div>
+                        </div>
+                        <table class="aui aui-table-sortable" id="team-table">
+                            <thead>
+                            <tr>
+                                <th class="teamname">Team Name</th>
+                                <th class="teamlead">Team Lead</th>
+                                ##                                <th class="associated-group">Associated Group</th>
+                                <th class="actions aui-table-column-unsortable">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                #foreach($team in $teamservice.getTeams())
+                                    #set($teaml = $teamservice.getTeamLead($team.getTeamName()))
+                                <tr>
+                                    <td class="teamname">
+                                        $!team.getTeamName() </td>
+                                    <td class="teamlead">
+                                        <span class="aui-avatar aui-avatar-medium">
+                                        <span class="aui-avatar-inner">
+                                            <img src=
+                                                #if ($!teaml.getAvatarURL())
+                                                        "$!teaml.getAvatarURL()"
+                                                #else
+                                                    "https://www.gravatar.com/avatar/724bf1b5d1cdedc2a0349cc9a9ebf47d?d=mm&s=24"
+                                                #end
+                                                 alt="profile picture $!teaml.getUserName()"/>
+                                        </span></span> $!teaml.getUserName()
+                                    </td>
+                                    <td class="actions">
+                                        <button class="aui-button"
+                                                onclick="showdialog('edit-team-dialog','$!{team.getTeamName()}')">Edit
+                                        </button>
+                                        <button class="aui-button"
+                                                onclick="opendeletedialog('$!team.getTeamName()')">Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                                #end
+                            </tbody>
+                            <tfoot>
+                            </tfoot>
+                        </table>
+
+                        ##                        Create Teams
+                        <section
+                                id="create-team-dialog"
+                                class="aui-dialog2 aui-dialog2-medium aui-layer"
+                                role="dialog"
+                                tabindex="-1"
+                                aria-labelledby="dialog-show-button--heading"
+                                hidden
+                        >
+                            <header class="aui-dialog2-header">
+                                <h1 class="aui-dialog2-header-main" id="dialog-show-button--heading">Create Team</h1>
+                                <button class="aui-close-button" type="button" aria-label="close"
+                                        onclick="hidedialog('create-team-dialog')"></button>
+                            </header>
+                            <div class="aui-dialog2-content">
+                                <form class="aui" id="teamlead-picker-form">
+                                    <div class="field-group">
+                                        <label for="text-input">Team Name
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input class="text medium-long-field" type="text"
+                                               id="teamname-input" name="teamName" placeholder="e.g. Controlling">
+                                        <div class="description">Enter the team's name.</div>
+                                        <div class="description"><h3 style="color:red" id="warning-duplicate-team">
+                                            </h3></div>
+                                    </div>
+                                    <div class="field-group">
+                                        <label for="text-input">Team Lead
+                                            <span class="aui-icon icon-required">(required)</span></label>
+                                        <input type="text" name="teamlead-picker" id="teamlead-picker"
+                                               multiple="multiple"
+                                               class="text medium-long-field" data-placeholder="e.g. Maxima Musterfrau">
+                                    </div>
+                                    <div class="buttons-container">
+                                        <div class="buttons">
+                                            <input class="aui-button aui-button-primary" type="submit" value="Save"
+                                                   id="comment-save-button">
+                                            <a class="aui-button cancel">Cancel</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+
+                        <script>
+                            AJS.$('#teamlead-picker').auiSelect2({
+                                hasAvatar: true, // auiSelect2 speciffic option, adds styling needed to properly display avatars
+                                multiple: false, // make the control a multi-select
+                                ajax: {
+                                    url: base_url + '/rest/api/2/user/picker', // JIRA URL to the REST end-point
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    cache: true,
+                                    // query parameters for the remote ajax call
+                                    data: function data(term) {
+                                        return {
+                                            query: term,
+                                            maxResults: 100,
+                                            showAvatar: true
+                                        };
+                                    },
+                                    // parse data from the server into form select2 expects
+                                    results: function results(data) {
+                                        return {
+                                            results: data.users
+                                        };
+                                    },
+                                },
+                                // specify id parameter of each user entity
+                                id: function id(user) {
+                                    return user.key;
+                                },
+                                // define how selected element should look like
+                                formatSelection: function formatSelection(user) {
+                                    var avatarHtml = aui.avatar.avatar({
+                                        size: 'small',
+                                        avatarImageUrl: user.avatarUrl
+                                    });
+                                    return avatarHtml + Select2.util.escapeMarkup(user.displayName);
+                                },
+                                // define how single option should look like
+                                formatResult: function formatResult(user, container, query, escapeMarkup) {
+                                    // format result string
+                                    var resultText = user.displayName + ' - (' + user.name + ')';
+                                    var avatarHtml = aui.avatar.avatar({
+                                        size: 'small',
+                                        avatarImageUrl: user.avatarUrl
+                                    });
+                                    var higlightedMatch = [];
+                                    // we need this to disable html escaping by select2 as we are doing it on our own
+                                    var noopEscapeMarkup = function noopEscapeMarkup(s) {
+                                        return s;
+                                    }
+                                    // highlight matches of the query term using matcher provided by the select2 library
+                                    Select2.util.markMatch(escapeMarkup(resultText), escapeMarkup(query.term), higlightedMatch, noopEscapeMarkup);
+                                    // convert array to string
+                                    higlightedMatch = higlightedMatch.join("");
+                                    return avatarHtml + higlightedMatch;
+                                },
+                                // define message showed when there are no matches
+                                formatNoMatches: function formatNoMatches(query) {
+                                    return 'No users found who matched your input';
+                                }
+                            });
+
+                            AJS.$('#teamlead-picker-form').on('submit', function (event) {
+                                event.preventDefault();
+                                const pickedUser = AJS.$('#teamlead-picker').select2('data');
+                                let obj = new Object();
+                                obj.teamLead = pickedUser.key;
+                                obj.avatarURL = pickedUser.avatarUrl;
+                                obj.userName = pickedUser.displayName;
+                                obj.teamName = AJS.$('#teamname-input').val();
+                                fetch(base_url + '/rest/appteamservice/1.0/team', {
+                                    method: 'PUT',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify(obj)
+                                }).then(res => {
+                                    console.log('Request complete! response:', res);
+                                    if (res.status === 201) {
+                                        console.log('success')
+                                        location.reload()
+                                    }else if (res.status === 409) {
+                                        document.getElementById('warning-duplicate-team').innerText = 'Team already exists!'
+                                        console.log('Team already exists!')
+                                    } else if (res.status === 500) {
+                                        // fetchTeamMembers(active_team)
+                                        console.log('ERROR')
+                                    }
+                                });
+                            });
+                        </script>
+
+                        ##ADD TEAM MEMBERS
+                        <section
+                                id="edit-team-dialog"
+                                class="aui-dialog2 aui-dialog2-large aui-layer"
+                                role="dialog"
+                                tabindex="-1"
+                                aria-labelledby="dialog-show-button--heading"
+                                hidden
+                        >
+                            <header class="aui-dialog2-header">
+                                <h1 class="aui-dialog2-header-main" id="dialog-show-button--heading">Add Team
+                                    Member</h1>
+                                <button class="aui-close-button" type="button" aria-label="close"></button>
+                            </header>
+                            <div class="aui-dialog2-content">
+                                <div>
+                                    <form class="aui" id="add-user-form">
+                                        <div class="field-group">
+                                            <label for="text-input">To be added users
+                                                <span class="aui-icon icon-required">(required)</span></label>
+                                            <input type="text" name="add-user-user-picker" id="add-user-user-picker"
+                                                   multiple="multiple"
+                                                   class="text long-field" data-placeholder="Select user">
+                                        </div>
+                                        <div class="buttons-container">
+                                            <div class="buttons">
+                                                <input class="aui-button aui-button-primary" type="submit" value="Save"
+                                                       id="submit-user-button">
+                                                <a class="cancel" id="cancel">Cancel</a>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div>
+                                    <table class="aui aui-table-sortable">
+                                        <thead>
+                                        <tr>
+                                            <th class="user">User</th>
+                                            <th class="role">Role</th>
+                                            <th class="action aui-table-column-unsortable">Actions</th>
+                                        </tr>
+                                        </thead>
+
+                                        <tbody id="team-members-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <footer class="aui-dialog2-footer">
+                            </footer>
+
+                            <script>
+                                AJS.$('#add-user-user-picker').auiSelect2({
+                                    hasAvatar: true, // auiSelect2 speciffic option, adds styling needed to properly display avatars
+                                    multiple: true, // make the control a multi-select
+                                    allowClear: true,
+                                    ajax: {
+                                        url: base_url + '/rest/api/2/user/picker', // JIRA URL to the REST end-point
+                                        type: 'GET',
+                                        dataType: 'json',
+                                        cache: true,
+                                        // query parameters for the remote ajax call
+                                        data: function data(term) {
+                                            return {
+                                                query: term,
+                                                maxResults: 100,
+                                                showAvatar: true
+                                            };
+                                        },
+                                        // parse data from the server into form select2 expects
+                                        results: function results(data) {
+                                            let filtered = [];
+                                            for (let i = 0; i < data.total; i++) {
+                                                if (!user_list.includes(data.users[i].key)) {
+                                                    filtered.push(data.users[i])
+                                                }
+                                            }
+                                            return {
+                                                results: filtered
+                                            };
+                                        },
+                                    },
+                                    // specify id parameter of each user entity
+                                    id: function id(user) {
+                                        return user.key;
+                                    },
+                                    // define how selected element should look like
+                                    formatSelection: function formatSelection(user) {
+                                        var avatarHtml = aui.avatar.avatar({
+                                            size: 'small',
+                                            avatarImageUrl: user.avatarUrl
+                                        });
+                                        return avatarHtml + Select2.util.escapeMarkup(user.displayName);
+                                    },
+                                    // define how single option should look like
+                                    formatResult: function formatResult(user, container, query, escapeMarkup) {
+                                        // format result string
+                                        var resultText = user.displayName + ' - (' + user.name + ')';
+                                        var avatarHtml = aui.avatar.avatar({
+                                            size: 'small',
+                                            avatarImageUrl: user.avatarUrl
+                                        });
+                                        var higlightedMatch = [];
+                                        // we need this to disable html escaping by select2 as we are doing it on our own
+                                        var noopEscapeMarkup = function noopEscapeMarkup(s) {
+                                            return s;
+                                        }
+                                        // highlight matches of the query term using matcher provided by the select2 library
+                                        Select2.util.markMatch(escapeMarkup(resultText), escapeMarkup(query.term), higlightedMatch, noopEscapeMarkup);
+                                        // convert array to string
+                                        higlightedMatch = higlightedMatch.join("");
+                                        return avatarHtml + higlightedMatch;
+                                    },
+                                    // define message showed when there are no matches
+                                    formatNoMatches: function formatNoMatches(query) {
+                                        return 'No users found who matched your input';
+                                    }
+                                });
+
+                                AJS.$('#add-user-form').on('submit', function (event) {
+                                    event.preventDefault();
+                                    const json = AJS.$('#add-user-user-picker').select2('data');
+                                    fetch(base_url + '/rest/appteamservice/1.0/team/' + active_team, {
+                                        method: 'PUT',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify(json)
+                                    }).then(res => {
+                                        console.log('Request complete! response:', res.status);
+                                        if (res.status === 201) {
+                                            console.log('success')
+                                            fetchTeamMembers(active_team)
+                                        } else if (res.status === 500) {
+                                            console.log('ERROR')
+                                        }
+                                    });
+                                });
+                            </script>
+                        </section>
+
+
+                        ##DELETE TEAM
+                        <section
+                                id="delete-team-dialog"
+                                class="aui-dialog2 aui-dialog2-medium aui-dialog2-warning aui-layer"
+                                role="dialog"
+                                tabindex="-1"
+                                aria-labelledby="dialog-show-button--heading"
+                                hidden
+                        >
+                            <header class="aui-dialog2-header">
+                                <h1 class="aui-dialog2-header-main">Are you sure to delete this team?</h1>
+                                <h2 class="aui-dialog2-header-main" id="delete-dialog-heading"></h2>
+                                <button class="aui-close-button" type="button" aria-label="close"></button>
+                            </header>
+                            <div class="aui-dialog2-content">
+                                <p>You cannot undo this action.</p>
+                            </div>
+                            <footer class="aui-dialog2-footer">
+                                <div class="aui-dialog2-footer-actions">
+                                    <form class="aui" method="post">
+                                        <button id="dialog-submit-button" class="aui-button aui-button-primary"
+                                                name="delete" onclick="deleteTeam(active_team)">Yes I am sure.
+                                        </button>
+                                        <h1 hidden name="deleteTeam"></h1>
+                                    </form>
+                                </div>
+                            </footer>
+                        </section>
+
+                        <script>
+                            function opendeletedialog(team) {
+                                active_team = team;
+                                AJS.dialog2('#delete-team-dialog').show();
+                            }
+
+                            function showdialog(dialog, team) {
+                                active_team = team;
+                                AJS.$('#add-user-user-picker').select2('val', '');
+                                AJS.$('#teamlead-picker').select2('val', '');
+                                AJS.$('#team-members-table-body tr').remove()
+                                AJS.dialog2("#" + dialog).show();
+                                console.log(team);
+                                fetchTeamMembers(team);
+                            }
+
+                            function hidedialog(dialog) {
+
+                            }
+
+                            // Shows the create team dialog
+                            AJS.$('#create-team').click(function (e) {
+                                e.preventDefault();
+                                AJS.dialog2('#create-team-dialog').show();
+                            });
+
+                            // Hides the create team dialog
+                            AJS.$('#dialog-submit-button').click(function (e) {
+                                e.preventDefault();
+                                AJS.dialog2('#create-team-dialog').hide();
+                            });
+
+
+                            async function fetchTeamMembers(teamname) {
+                                document.getElementById('warning-duplicate-team').innerText = ''
+                                user_list = [];
+                                AJS.$('#team-members-table-body tr').remove()
+                                console.log(base_url + '/rest/appteamservice/1.0/team/' + teamname)
+                                let response = await fetch(base_url + '/rest/appteamservice/1.0/team/' + teamname, {
+                                    method: 'GET',
+                                    headers: {'Content-Type': 'application/json'},
+                                    credentials: 'include'
+                                    // body: JSON.stringify(json)
+                                })
+                                let teamMembers = await response.json();
+                                let table = document.getElementById('team-members-table-body');
+                                for (let i = 0; i < teamMembers.length; i++) {
+                                    user_list.push(teamMembers[i].userKey)
+                                    let row = table.insertRow();
+                                    let userName = row.insertCell(0);
+                                    userName.innerHTML = '<span class="aui-avatar aui-avatar-small"> <span class="aui-avatar-inner"> <img src="' + teamMembers[i].avatarURL +
+                                            '"/> </span></span> ' + teamMembers[i].userName;
+                                    let role = row.insertCell(1);
+                                    role.innerHTML = ''
+                                    let deleteButton = row.insertCell(2);
+                                    var buttonId = teamname + '/' + teamMembers[i].userKey
+                                    deleteButton.innerHTML = '<button data-aui-trigger class="aui-button" aria-controls="more-details-' + buttonId + '">Delete</button>' +
+                                            '<aui-inline-dialog id="more-details-' + buttonId + '" alignment="top right"><p>Please confirm deletion</p>' +
+                                            '<input class="aui-button" type="submit" value="Confirm" onclick="deleteUser(\'' + buttonId + '\')">' +
+                                            // '<input class="aui-button" type="submit" value="Cancel">' +
+                                            '</aui-inline-dialog>'
+
+                                }
+                            }
+
+                            async function deleteUser(identifier) {
+                                console.log(identifier)
+                                console.log(base_url + '/rest/appteamservice/1.0/team/' + identifier)
+                                let response = await fetch(base_url + '/rest/appteamservice/1.0/team/' + identifier, {
+                                    method: 'DELETE',
+                                    headers: {'Content-Type': 'application/json'},
+                                    credentials: 'include'
+                                    // body: JSON.stringify(json)
+                                })
+                                console.log(response);
+                                fetchTeamMembers(active_team)
+                            }
+
+                            async function deleteTeam(teamname) {
+                                let response = await fetch(base_url + '/rest/appteamservice/1.0/team/' + teamname, {
+                                    method: 'DELETE',
+                                    headers: {'Content-Type': 'application/json'},
+                                    credentials: 'include'
+                                })
+                                console.log(response);
+                                location.reload();
+                            }
+
+                            function searchTable() {
+                                var input, filter, table, tr, td, i, txtValue;
+                                input = document.getElementById("search-teams");
+                                filter = input.value.toUpperCase();
+                                table = document.getElementById("team-table");
+                                tr = table.getElementsByTagName("tr");
+
+                                // Loop through all table rows, and hide those who don't match the search query
+                                for (i = 0; i < tr.length; i++) {
+                                    td = tr[i].getElementsByTagName("td")[0];
+                                    if (td) {
+                                        txtValue = td.textContent || td.innerText;
+                                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                            tr[i].style.display = "";
+                                        } else {
+                                            tr[i].style.display = "none";
+                                        }
+                                    }
+                                }
+                            }
+
+                        </script>
+
+                    </main>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+</body>
+</html>

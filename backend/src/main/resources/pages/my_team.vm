@@ -1,0 +1,108 @@
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-button")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-toggle")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-table")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-avatar")
+$webResourceManager.requireResource("com.atlassian.auiplugin:dialog2")
+$webResourceManager.requireResource("com.atlassian.jira.jira-quick-edit-plugin:quick-edit-issue")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select")
+$webResourceManager.requireResource("com.atlassian.auiplugin:aui-select2")
+
+$webResourceManager.requireResource("de.bearingpoint.app.backend:entrypoint-dynamictable_team")
+$webResourceManager.requireResource("de.bearingpoint.app.backend:app-my-team")
+
+<html lang="en">
+<head>
+    <title>Team Management</title>
+    <meta name="decorator" content="atl.general">
+</head>
+<body>
+<div id="page">
+    <div id="content">
+        <div class="aui-page-header">
+            <div class="aui-page-header-inner">
+                <div class="aui-page-header-main">
+                    <h1 id="teamheader">My Team</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="aui-page-panel">
+            <div class="aui-page-panel-inner">
+                <div class="aui-page-panel-nav">
+                    <div class="user-list-wrapper">
+                        <form action="#">
+                            <select name="associated_teams" id="associated_teams">
+                            </select>
+                        </form>
+
+                        <ul class="user-list" id="team-member-list">
+                        </ul>
+                    </div>
+                </div>
+                    <main id="main" role="main" class="aui-page-panel-content">
+                        <div id="maincontainer_team" class="maincontainer_team">
+                            <div id="container_team" class="maincontainer_team"></div>
+                        </div>
+                    </main>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let base_url = '$baseurl';
+    let userKey = '$userKey';
+    let teamname;
+
+    async function fetchTeammembers() {
+        console.log(base_url + '/rest/appteamservice/1.0/team/' + teamname);
+        let response = await fetch(base_url + '/rest/appteamservice/1.0/team/' + teamname, {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include'
+            // body: JSON.stringify(json)
+        });
+        let teamMembers = await response.json();
+
+        let ul = document.getElementById('team-member-list');
+        ul.innerHTML = '';
+        for (let i = 0; i < teamMembers.length; i++) {
+            ul.innerHTML += '<li class="list-item">' +
+                    '<div class="list-item-image"><span class="aui-avatar aui-avatar-mediumlarge"><span class="aui-avatar-inner"><img src="' + teamMembers[i].avatarURL + '">' +
+                    '</span></span></div><div class="list-item-content">' +
+                    '<h3 class="username">' + teamMembers[i].userName + '</h3>' +
+                    '<p class="role"></p></div></li>';
+        }
+    }
+
+    async function fetchAssociatedTeams() {
+        console.log(base_url + '/rest/appteamservice/1.0/team/associated/' + userKey);
+        let response = await fetch(base_url + '/rest/appteamservice/1.0/team/associated/' + userKey, {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include'
+        })
+        let associatedTeams = await response.json();
+
+        let ul = document.getElementById('associated_teams');
+        for (let i = 0; i < associatedTeams.length; i++) {
+            if (i === 0) {
+                teamname = associatedTeams[i]
+                document.getElementById('teamheader').innerHTML = 'My Team ' + teamname
+                fetchTeammembers();
+            }
+            ul.innerHTML += '<option value="' + associatedTeams[i] + '">' + associatedTeams[i] + '</option>'
+        }
+    }
+
+    fetchAssociatedTeams();
+
+    AJS.$('#associated_teams').on('change', function (e) {
+        teamname = AJS.$('#associated_teams').find(":selected").val()
+        fetchTeammembers()
+        document.getElementById('teamheader').innerHTML = 'My Team ' + teamname
+    })
+
+</script>
+</body>
+</html>
